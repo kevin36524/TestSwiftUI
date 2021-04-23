@@ -9,13 +9,17 @@ import SwiftUI
 import Combine
 
 
-class AppState: ObservableObject {
-    @Published var user: User = User()
-    @Published var globalCount: Int = 0
+struct AppState {
+    var user: User = User()
+    var globalCounter: Counter = Counter()
 }
 
-struct User {
-    var name: String
+class Counter: ObservableObject {
+    @Published var count: Int = 0
+}
+
+class User: ObservableObject {
+    @Published var name: String
     
     init(name: String = "Kevin") {
         self.name = name
@@ -23,41 +27,54 @@ struct User {
 }
 
 
-protocol DependencyProvider: CounterViewFactory {
-    var appState: AppState {get set}
-    
-    func makeCounterViewModel() -> CounterViewModel
+protocol CounterViewFactory {
+    func makeCounterView() -> AnyView
 }
 
-var cancelBag = Set<AnyCancellable>()
+protocol SettingsViewFactory {
+    func makeSettingsView() -> AnyView
+}
+
+protocol ContentViewFactory {
+    func makeContentView() -> AnyView
+}
+
+protocol DependencyProvider: CounterViewFactory, SettingsViewFactory, ContentViewFactory {
+}
 
 struct DependencyContainer: DependencyProvider {
-    
-    @ObservedObject var appState = AppState()
-    
-    func makeCounterViewModel() -> CounterViewModel {
-        return CounterViewModel(count: $appState.globalCount, countPublisher: appState.$globalCount.eraseToAnyPublisher())
-    }
-    
+    var appState = AppState()
 }
 
 extension DependencyContainer: CounterViewFactory {
     func makeCounterView() -> AnyView {
-        return AnyView(CounterView(viewModel: makeCounterViewModel()))
+        return AnyView(CounterView(viewModel: CounterViewModel(counter: appState.globalCounter)))
     }
 }
 
-let dependencyContainer = DependencyContainer()
-
-protocol CounterViewFactory {
-    func makeCounterView() -> AnyView
+extension DependencyContainer: SettingsViewFactory {
+    func makeSettingsView() -> AnyView {
+        return AnyView(SettingsView(viewModel: SettingsViewModel(counterViewFactory: self)))
+    }
+    
 }
+
+extension DependencyContainer: ContentViewFactory {
+    func makeContentView() -> AnyView {
+        return AnyView(ContentView(viewModel: ContentViewModel(user: appState.user,
+                                                               settingsViewFactory: self,
+                                                               counterViewFactory: self)))
+    }
+        
+}
+
+let dependencyContainer = DependencyContainer()
 
 @main
 struct TestSwiftUIApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            dependencyContainer.makeContentView()
         }
     }
 }

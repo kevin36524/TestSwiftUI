@@ -8,30 +8,34 @@
 import SwiftUI
 import Combine
 
+
+struct ContentViewModel {
+    let user: User
+    let settingsViewFactory: SettingsViewFactory
+    let counterViewFactory: CounterViewFactory
+}
+
 struct ContentView: View {
+    @ObservedObject var user: User
+    var viewModel: ContentViewModel
     @State var isSettingsViewShown: Bool = false
-    let name = "Kevin"
-    
+        
     var body: some View {
             NavigationView {
                 
                 VStack {
-                    Text("Hello, \(name)!")
+                    Text("Hello, \(user.name)!")
                         .padding()
                     Button(action: navigateToSettings) {
                         Text("Settings")
                     }
                     
-                    let settingsViewModel = SettingsViewModel(name: name, counterViewFactory: dependencyContainer)
-                    let settingsView = SettingsView(viewModel: settingsViewModel)
+                    let settingsView = viewModel.settingsViewFactory.makeSettingsView()
                     
                     NavigationLink(destination: settingsView, isActive: $isSettingsViewShown) {
                     }
-//
-//                    let counterViewModel = CounterViewModel(count: $appState.globalCount)
-//                    CounterView(viewModel: counterViewModel)
                     
-                    dependencyContainer.makeCounterView()
+                    viewModel.counterViewFactory.makeCounterView()
                 }
             }
     }
@@ -40,35 +44,39 @@ struct ContentView: View {
         print("KEVINDEBUG I will navigate to settings")
         isSettingsViewShown = true
     }
+    
+    init(viewModel: ContentViewModel) {
+        self.viewModel = viewModel
+        self.user = viewModel.user
+    }
 }
 
 struct CounterViewModel {
-    @Binding var count: Int
-    var countPublisher: AnyPublisher<Int, Never>
+    var counter: Counter
 }
 
 struct CounterView: View {
-    @State var viewModel: CounterViewModel
-    @State var count: Int = 0
+    @ObservedObject var counter: Counter
     
     var body: some View {
         VStack {
-            Text("Global Count \(count)").padding()
+            Text("Global Count \(counter.count)").padding()
             Button(action: {
-                viewModel.count += 1
+                counter.count += 1
             }, label: {
                 Text("Global Increment")
             })
-        }.onReceive(viewModel.countPublisher, perform: { _ in
-            print("KEVINDEBUG the value is being updated\(viewModel.count)")
-            count = viewModel.count
-        })
+        }
+    }
+    
+    init(viewModel: CounterViewModel) {
+        self.counter = viewModel.counter
     }
 }
 
 struct SettingsViewModel {
     var localCount = 0
-    var name: String
+    var name: String = "Foo"
     let counterViewFactory: CounterViewFactory
 }
 
@@ -93,9 +101,19 @@ struct SettingsView: View {
 }
 
 struct ContentView_Previews: PreviewProvider {
+    struct DummyFactory:SettingsViewFactory, CounterViewFactory {
+        func makeCounterView() -> AnyView {
+            return AnyView(Text("Counter"))
+        }
+        
+        func makeSettingsView() -> AnyView {
+            return AnyView(Text("Settings"))
+        }
+        
+    }
     static var previews: some View {
-        ContentView()
-            
+        let dummyFactory = DummyFactory()
+        ContentView(viewModel: ContentViewModel(user: User(), settingsViewFactory: dummyFactory, counterViewFactory: dummyFactory))
     }
 }
     

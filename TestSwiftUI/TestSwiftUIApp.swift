@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 
 class AppState: ObservableObject {
@@ -29,16 +30,19 @@ protocol DependencyProvider {
     func makeCounterView() -> CounterView
 }
 
+var cancelBag = Set<AnyCancellable>()
+
 struct DependencyContainer: DependencyProvider {
     
     @ObservedObject var appState = AppState()
     
     func makeCounterViewModel() -> CounterViewModel {
-        return CounterViewModel(count: $appState.globalCount)
+        return CounterViewModel(count: $appState.globalCount, countPublisher: appState.$globalCount.eraseToAnyPublisher())
     }
     
     func makeCounterView() -> CounterView {
-        return CounterView(count: appState.$globalCount)
+//        return CounterView(count: appState.$globalCount)
+        return CounterView(viewModel: makeCounterViewModel())
     }
     
 }

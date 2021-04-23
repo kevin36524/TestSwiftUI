@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ContentView: View {
     @State var isSettingsViewShown: Bool = false
@@ -42,29 +43,27 @@ struct ContentView: View {
 }
 
 struct CounterViewModel {
-    var count: Binding<Int>
+    @Binding var count: Int
+    var countPublisher: AnyPublisher<Int, Never>
 }
 
 struct CounterView: View {
-    var count: Published<Int>.Publisher
-    @State var displayCount = 0
+    @State var viewModel: CounterViewModel
+    @State var count: Int = 0
     
     var body: some View {
         VStack {
-            Text("Global Count \(displayCount)").padding()
+            Text("Global Count \(count)").padding()
             Button(action: {
-                dependencyContainer.appState.globalCount += 1
+                viewModel.count += 1
             }, label: {
                 Text("Global Increment")
             })
-        }.onReceive(count, perform: { newVal in
-            displayCount = newVal
+        }.onReceive(viewModel.countPublisher, perform: { _ in
+            print("KEVINDEBUG the value is being updated\(viewModel.count)")
+            count = viewModel.count
         })
     }
-    
-//    init(viewModel: CounterViewModel) {
-//        self._count = viewModel.count
-//    }
 }
 
 struct SettingsViewModel {

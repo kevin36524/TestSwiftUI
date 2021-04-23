@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State var isSettingsViewShown: Bool = false
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var appState: AppState
     
     var body: some View {
             NavigationView {
@@ -88,7 +88,8 @@ struct SettingsView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(appState: AppState())
+            
     }
 }
     

@@ -25,7 +25,7 @@ struct User {
 struct TestSwiftUIApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView().environmentObject(AppState())
+            ContentView(appState: AppState())
         }
     }
 }

@@ -23,11 +23,10 @@ struct User {
 }
 
 
-protocol DependencyProvider {
+protocol DependencyProvider: CounterViewFactory {
     var appState: AppState {get set}
     
     func makeCounterViewModel() -> CounterViewModel
-    func makeCounterView() -> CounterView
 }
 
 var cancelBag = Set<AnyCancellable>()
@@ -40,23 +39,19 @@ struct DependencyContainer: DependencyProvider {
         return CounterViewModel(count: $appState.globalCount, countPublisher: appState.$globalCount.eraseToAnyPublisher())
     }
     
-    func makeCounterView() -> CounterView {
-//        return CounterView(count: appState.$globalCount)
-        return CounterView(viewModel: makeCounterViewModel())
-    }
-    
 }
 
 extension DependencyContainer: CounterViewFactory {
-
+    func makeCounterView() -> AnyView {
+        return AnyView(CounterView(viewModel: makeCounterViewModel()))
+    }
 }
 
 let dependencyContainer = DependencyContainer()
 
 protocol CounterViewFactory {
-    func makeCounterView() -> CounterView
+    func makeCounterView() -> AnyView
 }
-
 
 @main
 struct TestSwiftUIApp: App {

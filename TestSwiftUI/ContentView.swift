@@ -27,7 +27,8 @@ struct ContentView: View {
                     NavigationLink(destination: settingsView, isActive: $isSettingsViewShown) {
                     }
                     
-                    CounterView()
+                    let counterViewModel = CounterViewModel(count: $appState.globalCount)
+                    CounterView(viewModel: counterViewModel)
                 }
             }
     }
@@ -38,15 +39,19 @@ struct ContentView: View {
     }
 }
 
+struct CounterViewModel {
+    @Binding var count: Int
+}
+
 struct CounterView: View {
     
-    @EnvironmentObject var appState: AppState
+    var viewModel: CounterViewModel
     
     var body: some View {
         VStack {
-            Text("Global Count \(appState.globalCount)").padding()
+            Text("Global Count \(viewModel.count)").padding()
             Button(action: {
-                appState.globalCount += 1
+                viewModel.count += 1
             }, label: {
                 Text("Global Increment")
             })
@@ -72,7 +77,10 @@ struct SettingsView: View {
             }, label: {
                 Text("Inc Local")
             })
-            CounterView()
+            
+            // TODO need to get the global count reference
+            let counterViewModel = CounterViewModel(count: $viewModel.localCount)
+            CounterView(viewModel: counterViewModel)
         }
         
     }

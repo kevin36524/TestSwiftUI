@@ -21,11 +21,44 @@ struct User {
     }
 }
 
+
+protocol DependencyProvider {
+    var appState: AppState {get set}
+    
+    func makeCounterViewModel() -> CounterViewModel
+    func makeCounterView() -> CounterView
+}
+
+struct DependencyContainer: DependencyProvider {
+    
+    @ObservedObject var appState = AppState()
+    
+    func makeCounterViewModel() -> CounterViewModel {
+        return CounterViewModel(count: $appState.globalCount)
+    }
+    
+    func makeCounterView() -> CounterView {
+        return CounterView(count: appState.$globalCount)
+    }
+    
+}
+
+extension DependencyContainer: CounterViewFactory {
+
+}
+
+let dependencyContainer = DependencyContainer()
+
+protocol CounterViewFactory {
+    func makeCounterView() -> CounterView
+}
+
+
 @main
 struct TestSwiftUIApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView(appState: AppState())
+            ContentView()
         }
     }
 }

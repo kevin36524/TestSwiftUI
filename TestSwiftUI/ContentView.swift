@@ -9,26 +9,28 @@ import SwiftUI
 
 struct ContentView: View {
     @State var isSettingsViewShown: Bool = false
-    @ObservedObject var appState: AppState
+    let name = "Kevin"
     
     var body: some View {
             NavigationView {
                 
                 VStack {
-                    Text("Hello, \(appState.user.name)!")
+                    Text("Hello, \(name)!")
                         .padding()
                     Button(action: navigateToSettings) {
                         Text("Settings")
                     }
                     
-                    let settingsViewModel = SettingsViewModel(name: appState.user.name)
+                    let settingsViewModel = SettingsViewModel(name: name, counterViewFactory: dependencyContainer)
                     let settingsView = SettingsView(viewModel: settingsViewModel)
                     
                     NavigationLink(destination: settingsView, isActive: $isSettingsViewShown) {
                     }
+//
+//                    let counterViewModel = CounterViewModel(count: $appState.globalCount)
+//                    CounterView(viewModel: counterViewModel)
                     
-                    let counterViewModel = CounterViewModel(count: $appState.globalCount)
-                    CounterView(viewModel: counterViewModel)
+                    dependencyContainer.makeCounterView()
                 }
             }
     }
@@ -40,28 +42,35 @@ struct ContentView: View {
 }
 
 struct CounterViewModel {
-    @Binding var count: Int
+    var count: Binding<Int>
 }
 
 struct CounterView: View {
-    
-    var viewModel: CounterViewModel
+    var count: Published<Int>.Publisher
+    @State var displayCount = 0
     
     var body: some View {
         VStack {
-            Text("Global Count \(viewModel.count)").padding()
+            Text("Global Count \(displayCount)").padding()
             Button(action: {
-                viewModel.count += 1
+                dependencyContainer.appState.globalCount += 1
             }, label: {
                 Text("Global Increment")
             })
-        }
+        }.onReceive(count, perform: { newVal in
+            displayCount = newVal
+        })
     }
+    
+//    init(viewModel: CounterViewModel) {
+//        self._count = viewModel.count
+//    }
 }
 
 struct SettingsViewModel {
     var localCount = 0
     var name: String
+    let counterViewFactory: CounterViewFactory
 }
 
 struct SettingsView: View {
@@ -78,9 +87,7 @@ struct SettingsView: View {
                 Text("Inc Local")
             })
             
-            // TODO need to get the global count reference
-            let counterViewModel = CounterViewModel(count: $viewModel.localCount)
-            CounterView(viewModel: counterViewModel)
+            viewModel.counterViewFactory.makeCounterView()
         }
         
     }
@@ -88,7 +95,7 @@ struct SettingsView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView(appState: AppState())
+        ContentView()
             
     }
 }

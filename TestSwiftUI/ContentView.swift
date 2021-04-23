@@ -21,7 +21,10 @@ struct ContentView: View {
                         Text("Settings")
                     }
                     
-                    NavigationLink(destination: SettingsView(globalCount: $appState.globalCount), isActive: $isSettingsViewShown) {
+                    let settingsViewModel = SettingsViewModel(name: appState.user.name)
+                    let settingsView = SettingsView(viewModel: settingsViewModel)
+                    
+                    NavigationLink(destination: settingsView, isActive: $isSettingsViewShown) {
                     }
                     
                     CounterView()
@@ -51,17 +54,21 @@ struct CounterView: View {
     }
 }
 
+struct SettingsViewModel {
+    var localCount = 0
+    var name: String
+}
+
 struct SettingsView: View {
-    @State var localCount = 0
-    @Binding var globalCount: Int
+    @State var viewModel: SettingsViewModel
     
     var body: some View {
         VStack {
-            Text("Settings").padding()
-            Text("Local Count \(localCount)").padding()
+            Text("Settings for \(viewModel.name)").padding()
+            Text("Local Count \(viewModel.localCount)").padding()
             Button(action: {
-                localCount += 1
-                globalCount += 1
+                viewModel.localCount += 1
+                viewModel.name = "Kevin mutated"
             }, label: {
                 Text("Inc Local")
             })

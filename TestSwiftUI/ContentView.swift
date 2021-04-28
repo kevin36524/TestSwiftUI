@@ -62,7 +62,7 @@ struct CounterView: View {
         VStack {
             Text("Global Count \(counter.count)").padding()
             Button(action: {
-                counter.count += 1
+                counter.increment()
             }, label: {
                 Text("Global Increment")
             })

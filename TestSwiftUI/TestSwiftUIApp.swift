@@ -15,7 +15,11 @@ struct AppState {
 }
 
 class Counter: ObservableObject {
-    @Published var count: Int = 0
+    @Published private(set) var count: Int = 0
+    
+    func increment() {
+        count += 1
+    }
 }
 
 class User: ObservableObject {
@@ -39,7 +43,7 @@ protocol ContentViewFactory {
     func makeContentView() -> AnyView
 }
 
-protocol DependencyProvider: CounterViewFactory, SettingsViewFactory, ContentViewFactory {
+protocol DependencyProvider: ContentViewFactory {
 }
 
 struct DependencyContainer: DependencyProvider {
@@ -68,13 +72,40 @@ extension DependencyContainer: ContentViewFactory {
         
 }
 
-let dependencyContainer = DependencyContainer()
+struct FakeContainer: DependencyProvider {
+    func makeContentView() -> AnyView {
+        return AnyView(Text("Hello World"))
+    }
+}
+
+struct CounterTestContainer: DependencyProvider {
+    let dep = DependencyContainer()
+    
+    func makeContentView() -> AnyView {
+        return dep.makeCounterView()
+    }
+}
+
+class DepContainerFactory  {
+    static let shared = DepContainerFactory()
+    
+    var container:DependencyProvider = DependencyContainer()
+    
+    init() {
+        if (ProcessInfo().arguments.contains("FAKE-TEST")) {
+            container = FakeContainer()
+        } else if (ProcessInfo().arguments.contains("COUNTER-TEST")) {
+            container = CounterTestContainer()
+        }
+    }
+}
+
 
 @main
 struct TestSwiftUIApp: App {
     var body: some Scene {
         WindowGroup {
-            dependencyContainer.makeContentView()
+            DepContainerFactory.shared.container.makeContentView()
         }
     }
 }

@@ -20,6 +20,12 @@ class TestSwiftUITests: XCTestCase {
 
     func testExample() throws {
         // This is an example of a functional test case.
+        let foo = Counter()
+        XCTAssert(foo.count == 0)
+        foo.increment()
+        foo.increment()
+        foo.increment()
+        XCTAssert(foo.count == 3, "Expected 3 Actual \(foo.count)")
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
 
